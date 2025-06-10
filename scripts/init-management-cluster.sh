@@ -76,7 +76,7 @@ EOF
         --bootstrap kubeadm:v1.7.0 \
         --control-plane kubeadm:v1.7.0 \
         --infrastructure hetzner:v1.0.1 \
-        --config-file clusterctl-config.yaml
+        --config clusterctl-config.yaml
 fi
 
 # Wait for CAPI controllers to be ready
@@ -249,7 +249,7 @@ if [[ "${BOOTSTRAP_CLUSTER_CONTEXT}" == "kind-capi-bootstrap" ]]; then
         --bootstrap kubeadm:v1.7.0 \
         --control-plane kubeadm:v1.7.0 \
         --infrastructure hetzner:v1.0.1 \
-        --config-file clusterctl-config.yaml
+        --config clusterctl-config.yaml
     
     # Wait for providers to be ready on management cluster
     echo -e "${BLUE}Waiting for CAPI providers on management cluster...${NC}"
