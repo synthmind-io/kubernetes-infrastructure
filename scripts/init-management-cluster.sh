@@ -115,8 +115,6 @@ echo -e "${BLUE}Creating management cluster...${NC}"
 # Check if cluster manifests exist
 REQUIRED_MANIFESTS=(
     "clusters/management/cluster.yaml"
-    "clusters/management/control-plane.yaml"
-    "clusters/management/workers.yaml"
 )
 
 missing_manifests=()
@@ -140,8 +138,6 @@ fi
 
 # First, process the cluster YAML to replace environment variables
 envsubst < clusters/management/cluster.yaml | kubectl apply -f -
-envsubst < clusters/management/control-plane.yaml | kubectl apply -f -
-envsubst < clusters/management/workers.yaml | kubectl apply -f -
 
 # Wait for cluster to be ready
 echo -e "${BLUE}Waiting for management cluster to be provisioned...${NC}"
