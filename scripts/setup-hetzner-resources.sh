@@ -55,11 +55,15 @@ resource_exists() {
     
     case $resource_type in
         ssh-key)
-            # SSH keys use different column format
+            # SSH keys: name is in column 2
             hcloud ssh-key list -o noheader | awk '{print $2}' | grep -q "^${resource_name}$"
             ;;
+        network|placement-group|firewall)
+            # Networks, placement groups, firewalls: name is in column 2
+            hcloud $resource_type list -o noheader | awk '{print $2}' | grep -q "^${resource_name}$"
+            ;;
         *)
-            # Default check for other resources
+            # Default check for other resources: name is in column 1
             hcloud $resource_type list -o noheader | awk '{print $1}' | grep -q "^${resource_name}$"
             ;;
     esac
@@ -106,19 +110,23 @@ for i in "${!CLUSTER_NAMES[@]}"; do
     
     if ! resource_exists network "${network_name}"; then
         echo -e "${BLUE}Creating network: ${network_name} (${network_cidr})${NC}"
-        hcloud network create \
+        if hcloud network create \
             --name "${network_name}" \
             --ip-range "${network_cidr}" \
             --label "cluster=${cluster}" \
-            --label "managed-by=caph"
-        
-        # Create subnet
-        subnet_cidr="${network_cidr}"
-        echo -e "${BLUE}Creating subnet for ${network_name}${NC}"
-        hcloud network add-subnet "${network_name}" \
-            --type cloud \
-            --network-zone eu-central \
-            --ip-range "${subnet_cidr}"
+            --label "managed-by=caph"; then
+            
+            # Create subnet
+            subnet_cidr="${network_cidr}"
+            echo -e "${BLUE}Creating subnet for ${network_name}${NC}"
+            hcloud network add-subnet "${network_name}" \
+                --type cloud \
+                --network-zone eu-central \
+                --ip-range "${subnet_cidr}"
+            echo -e "${GREEN}Network created: ${network_name}${NC}"
+        else
+            echo -e "${YELLOW}Network creation failed, but continuing (may already exist)${NC}"
+        fi
     else
         echo -e "${GREEN}Network already exists: ${network_name}${NC}"
     fi
@@ -134,11 +142,15 @@ for cluster in "${CLUSTERS[@]}"; do
     
     if ! resource_exists placement-group "${pg_name}"; then
         echo -e "${BLUE}Creating placement group: ${pg_name}${NC}"
-        hcloud placement-group create \
+        if hcloud placement-group create \
             --name "${pg_name}" \
             --type spread \
             --label "cluster=${cluster}" \
-            --label "managed-by=caph"
+            --label "managed-by=caph"; then
+            echo -e "${GREEN}Placement group created: ${pg_name}${NC}"
+        else
+            echo -e "${YELLOW}Placement group creation failed, but continuing (may already exist)${NC}"
+        fi
     else
         echo -e "${GREEN}Placement group already exists: ${pg_name}${NC}"
     fi

@@ -38,12 +38,25 @@ github:
 # Complete bootstrap
 bootstrap: check
 	@echo "Starting complete infrastructure bootstrap..."
-	@./scripts/setup-github-resources.sh
-	@./scripts/setup-hetzner-resources.sh
-	@./scripts/init-management-cluster.sh
-	@./scripts/install-argocd.sh
-	@./scripts/apply-root-apps.sh
+	@./scripts/setup-github-resources.sh || { echo "GitHub setup failed"; exit 1; }
+	@./scripts/setup-hetzner-resources.sh || { echo "Hetzner setup failed"; exit 1; }
+	@./scripts/init-management-cluster.sh || { echo "Management cluster creation failed"; exit 1; }
+	@./scripts/install-argocd.sh || { echo "ArgoCD installation failed"; exit 1; }
+	@./scripts/apply-root-apps.sh || { echo "Root apps deployment failed"; exit 1; }
 	@echo "Bootstrap complete! Check ArgoCD for application status."
+
+# Resume bootstrap from specific steps
+bootstrap-hetzner:
+	@./scripts/setup-hetzner-resources.sh
+
+bootstrap-cluster:
+	@./scripts/init-management-cluster.sh
+
+bootstrap-argocd:
+	@./scripts/install-argocd.sh
+
+bootstrap-apps:
+	@./scripts/apply-root-apps.sh
 
 # Deploy management cluster only
 deploy-management: check
