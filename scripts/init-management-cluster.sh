@@ -72,10 +72,10 @@ EOF
     # Initialize Cluster API on bootstrap cluster
     echo -e "${BLUE}Initializing Cluster API providers on bootstrap cluster...${NC}"
     clusterctl init \
-        --core cluster-api:v1.7.0 \
-        --bootstrap kubeadm:v1.7.0 \
-        --control-plane kubeadm:v1.7.0 \
-        --infrastructure hetzner:v1.0.3 \
+        --core cluster-api \
+        --bootstrap kubeadm \
+        --control-plane kubeadm \
+        --infrastructure hetzner \
         --config clusterctl-config.yaml
 fi
 
@@ -245,10 +245,10 @@ if [[ "${BOOTSTRAP_CLUSTER_CONTEXT}" == "kind-capi-bootstrap" ]]; then
     # Initialize CAPI on the management cluster (required before move)
     echo -e "${BLUE}Initializing CAPI providers on management cluster...${NC}"
     KUBECONFIG=kubeconfig-management clusterctl init \
-        --core cluster-api:v1.7.0 \
-        --bootstrap kubeadm:v1.7.0 \
-        --control-plane kubeadm:v1.7.0 \
-        --infrastructure hetzner:v1.0.3 \
+        --core cluster-api\
+        --bootstrap kubeadm \
+        --control-plane kubeadm \
+        --infrastructure hetzner \
         --config clusterctl-config.yaml
     
     # Wait for providers to be ready on management cluster
