@@ -41,8 +41,11 @@ if [[ -z "${HCLOUD_TOKEN:-}" ]]; then
 fi
 
 # Configure hcloud CLI
-hcloud context create caph-clusters 2>/dev/null || true
+echo -e "${BLUE}Creating hcloud context...${NC}"
+hcloud context create caph-clusters 2>/dev/null || echo -e "${YELLOW}Context may already exist${NC}"
+echo -e "${BLUE}Using hcloud context...${NC}"
 hcloud context use caph-clusters
+echo -e "${BLUE}Active context:${NC}"
 hcloud context active
 
 # Function to check if resource exists
