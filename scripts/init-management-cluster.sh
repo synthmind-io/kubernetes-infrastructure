@@ -81,10 +81,10 @@ fi
 
 # Wait for CAPI controllers to be ready
 echo -e "${BLUE}Waiting for CAPI controllers...${NC}"
-wait_for_condition capi-system deployment/capi-controller-manager ready
-wait_for_condition capi-kubeadm-bootstrap-system deployment/capi-kubeadm-bootstrap-controller-manager ready
-wait_for_condition capi-kubeadm-control-plane-system deployment/capi-kubeadm-control-plane-controller-manager ready
-wait_for_condition caph-system deployment/caph-controller-manager ready
+wait_for_condition capi-system deployment/capi-controller-manager available
+wait_for_condition capi-kubeadm-bootstrap-system deployment/capi-kubeadm-bootstrap-controller-manager available
+wait_for_condition capi-kubeadm-control-plane-system deployment/capi-kubeadm-control-plane-controller-manager available
+wait_for_condition caph-system deployment/caph-controller-manager available
 
 # Create Hetzner secret
 echo -e "${BLUE}Creating Hetzner credentials secret...${NC}"
