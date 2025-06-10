@@ -678,42 +678,33 @@ data:
         replacement: ${CLUSTER_NAME}
 ```
 
-### 2. Promtail Configuration for Log Forwarding
+### 2. Vector Agent Configuration for Unified Observability
 
 ```yaml
 # To be deployed in each workload cluster
+# See vector-observability-implementation.md for complete Vector setup
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: promtail-config
-  namespace: kube-system
+  name: vector-config
+  namespace: vector-system
 data:
-  promtail.yaml: |
-    server:
-      http_listen_port: 9080
-      grpc_listen_port: 0
+  vector.toml: |
+    # Vector replaces both Promtail and Prometheus node-exporter
+    # Provides unified logs and metrics collection with better performance
     
-    positions:
-      filename: /tmp/positions.yaml
+    [sources.kubernetes_logs]
+    type = "kubernetes_logs"
     
-    clients:
-    - url: https://loki.your-domain.com/loki/api/v1/push
-      external_labels:
-        cluster: ${CLUSTER_NAME}
-        environment: ${ENVIRONMENT}
+    [sources.host_metrics]
+    type = "host_metrics"
     
-    scrape_configs:
-    - job_name: kubernetes-pods
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_promtail_io_scrape]
-        action: keep
-        regex: true
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
+    [sinks.monitoring_cluster]
+    type = "vector"
+    inputs = ["kubernetes_logs", "host_metrics"]
+    address = "vector-aggregator.monitoring.svc.cluster.local:9000"
+    
+    # See full configuration in vector-observability-implementation.md
 ```
 
 ## Storage Configuration

@@ -50,9 +50,10 @@ The management cluster serves as the control center for all operations:
 **Components:**
 - **Cluster API Controllers**: CAPI, CAPBK, KCP, CAPH (all in HA mode with 2 replicas)
 - **ArgoCD**: Multi-tenant setup with separate projects per environment
-- **Backup**: Velero with Hetzner Storage Box backend
+- **Backup**: Velero with S3-compatible backend (Hetzner Object Storage)
 - **Secret Management**: External Secrets Operator with AWS Secrets Manager
 - **Policy Engine**: OPA Gatekeeper for governance
+- **VPN Access**: DefGuard WireGuard VPN with Google SSO
 
 **Specifications:**
 - **Control Plane**: 3x cpx31 instances across different Hetzner zones
@@ -70,6 +71,7 @@ A dedicated monitoring cluster provides centralized observability:
 - **Visualization**: Grafana with dashboards for all clusters
 - **Alerting**: AlertManager with PagerDuty/Slack integration
 - **Tracing**: Jaeger for distributed tracing (optional)
+- **Collection Agent**: Vector for unified observability (replaces Promtail + node-exporter)
 
 **Specifications:**
 - **Control Plane**: 3x cpx31 instances for HA

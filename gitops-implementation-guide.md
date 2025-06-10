@@ -62,7 +62,10 @@ kubernetes-infrastructure/
 │   │   ├── hcloud-ccm/
 │   │   ├── hcloud-csi/
 │   │   ├── external-secrets/
-│   │   └── external-dns/
+│   │   ├── external-dns/
+│   │   ├── vector/
+│   │   ├── velero/
+│   │   └── defguard/
 │   ├── monitoring/
 │   │   ├── base/
 │   │   │   ├── prometheus/
@@ -617,6 +620,7 @@ bases:
 - ../../base/ingress-nginx
 - ../../base/cert-manager
 - ../../base/external-secrets
+- ../../base/vector
 
 patchesStrategicMerge:
 - patches/cilium-values.yaml
@@ -673,6 +677,7 @@ bases:
 - ../../base/cert-manager
 - ../../base/external-secrets
 - ../../base/external-dns
+- ../../base/vector
 
 patchesStrategicMerge:
 - patches/cilium-values.yaml
