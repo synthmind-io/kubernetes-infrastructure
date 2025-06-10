@@ -52,7 +52,17 @@ hcloud context active
 resource_exists() {
     local resource_type=$1
     local resource_name=$2
-    hcloud $resource_type list -o noheader | grep -q "^${resource_name}\s" || false
+    
+    case $resource_type in
+        ssh-key)
+            # SSH keys use different column format
+            hcloud ssh-key list -o noheader | awk '{print $2}' | grep -q "^${resource_name}$"
+            ;;
+        *)
+            # Default check for other resources
+            hcloud $resource_type list -o noheader | awk '{print $1}' | grep -q "^${resource_name}$"
+            ;;
+    esac
 }
 
 # Create SSH key if it doesn't exist
@@ -70,10 +80,14 @@ fi
 # Upload SSH key to Hetzner if it doesn't exist
 if ! resource_exists ssh-key "${HETZNER_SSH_KEY}"; then
     echo -e "${BLUE}Uploading SSH key to Hetzner...${NC}"
-    hcloud ssh-key create \
+    if hcloud ssh-key create \
         --name "${HETZNER_SSH_KEY}" \
         --public-key-from-file "${SSH_KEY_PATH}.pub" \
-        --label "managed-by=caph"
+        --label "managed-by=caph"; then
+        echo -e "${GREEN}SSH key uploaded successfully${NC}"
+    else
+        echo -e "${YELLOW}SSH key upload failed, but continuing (key may already exist)${NC}"
+    fi
 else
     echo -e "${GREEN}SSH key already exists in Hetzner: ${HETZNER_SSH_KEY}${NC}"
 fi
