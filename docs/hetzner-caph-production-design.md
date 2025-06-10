@@ -52,6 +52,7 @@ The management cluster serves as the control center for all operations:
 - **ArgoCD**: Multi-tenant setup with separate projects per environment
 - **Backup**: Velero with S3-compatible backend (Hetzner Object Storage)
 - **Secret Management**: External Secrets Operator with AWS Secrets Manager
+- **DNS Management**: External DNS with Route53 backend
 - **Policy Engine**: OPA Gatekeeper for governance
 - **VPN Access**: DefGuard WireGuard VPN with Google SSO
 

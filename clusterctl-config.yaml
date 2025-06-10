@@ -1,0 +1,33 @@
+# clusterctl configuration for Hetzner CAPH
+# This file configures the Cluster API providers
+
+# Provider repository configuration
+providers:
+  - name: "hetzner"
+    url: "https://github.com/syself/cluster-api-provider-hetzner/releases/latest/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+
+# Images configuration (optional, uses defaults if not specified)
+images:
+  all:
+    repository: ""  # Uses default repositories
+
+# Variables that can be used in cluster templates
+variables:
+  HCLOUD_SSH_KEY: "${HETZNER_SSH_KEY}"
+  HCLOUD_REGION: "fsn1"
+  HCLOUD_CONTROL_PLANE_MACHINE_TYPE: "cpx31"
+  HCLOUD_WORKER_MACHINE_TYPE: "cpx41"
+  CLUSTER_NAME: "management"
+  KUBERNETES_VERSION: "v1.31.6"
+  CONTROL_PLANE_MACHINE_COUNT: "3"
+  WORKER_MACHINE_COUNT: "3"
+
+# Cert-manager configuration
+CERT_MANAGER_URL: "https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml"
+
+# Provider-specific configuration
+HETZNER_SSH_PUB_PATH: "~/.ssh/hetzner-k8s.pub"
+HETZNER_SSH_PRIV_PATH: "~/.ssh/hetzner-k8s"
+HETZNER_ROBOT_USER: "${HETZNER_ROBOT_USER}"
+HETZNER_ROBOT_PASSWORD: "${HETZNER_ROBOT_PASSWORD}"

@@ -620,6 +620,7 @@ bases:
 - ../../base/ingress-nginx
 - ../../base/cert-manager
 - ../../base/external-secrets
+- ../../base/external-dns
 - ../../base/vector
 
 patchesStrategicMerge:

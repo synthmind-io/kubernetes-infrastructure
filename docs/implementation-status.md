@@ -79,9 +79,18 @@ A production-ready Kubernetes multi-cluster environment on Hetzner infrastructur
   - RTO/RPO objectives defined
   - Automated testing procedures
 
-### 9. Management Scripts
+### 9. External DNS with Route53
+- **Document**: `external-dns-route53-implementation.md`
+- **Status**: ✅ Complete
+- **Features**:
+  - Automatic DNS record management
+  - Route53 integration with zone separation
+  - IRSA security configuration
+  - Per-cluster domain filtering
+
+### 10. Management Scripts
 - **Scripts**:
-  - `scripts/manage-secrets.sh` - Interactive secret management
+  - `scripts/manage-secrets.sh` - Interactive secret management (updated with Route53)
   - `scripts/setup-defguard-vpn.sh` - Automated VPN deployment
   - `scripts/bootstrap.sh` - Cluster bootstrap automation
   - `scripts/bootstrap-monitoring-cluster.sh` - Monitoring setup
@@ -102,7 +111,8 @@ A production-ready Kubernetes multi-cluster environment on Hetzner infrastructur
 ### Additional Services
 - Load Balancers: ~€50/month
 - S3 Storage (Backups): ~€50-100/month
-- **Total with Services**: ~€987.46/month
+- Route53 DNS queries: ~€10-20/month
+- **Total with Services**: ~€997-1,007/month
 
 ## 🔐 Security Features
 
@@ -204,6 +214,7 @@ A production-ready Kubernetes multi-cluster environment on Hetzner infrastructur
    - `gitops-implementation-guide.md`
    - `monitoring-cluster-implementation.md`
    - `external-secrets-implementation.md`
+   - `external-dns-route53-implementation.md`
    - `sso-and-vpn-implementation.md`
    - `vector-observability-implementation.md`
    - `velero-disaster-recovery.md`
@@ -222,5 +233,6 @@ A production-ready Kubernetes multi-cluster environment on Hetzner infrastructur
 4. **Zero-trust security** - VPN + SSO + network policies
 5. **Full automation** - GitOps-driven with minimal manual intervention
 6. **Cost optimized** - Mixed cloud/bare metal for best price/performance
+7. **Automated DNS management** - External DNS with Route53 for all clusters
 
 This implementation provides a production-ready, secure, and cost-effective Kubernetes platform on Hetzner infrastructure with enterprise-grade features typically found in much more expensive solutions.

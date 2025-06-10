@@ -1,0 +1,80 @@
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: management-control-plane
+  namespace: default
+spec:
+  replicas: 3
+  version: v1.31.6
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: HCloudMachineTemplate
+      name: management-control-plane
+  kubeadmConfigSpec:
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: external
+          eviction-hard: 'imagefs.available<15%,memory.available<500Mi,nodefs.available<10%,nodefs.inodesFree<5%'
+    clusterConfiguration:
+      apiServer:
+        extraArgs:
+          cloud-provider: external
+          enable-admission-plugins: NodeRestriction,ResourceQuota,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,LimitRanger,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,Priority,PodSecurityPolicy
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "3"
+          audit-log-maxsize: "100"
+          audit-log-path: /var/log/audit.log
+          profiling: "false"
+      controllerManager:
+        extraArgs:
+          cloud-provider: external
+          bind-address: 0.0.0.0
+      scheduler:
+        extraArgs:
+          bind-address: 0.0.0.0
+      etcd:
+        local:
+          dataDir: "/var/lib/etcd"
+          extraArgs:
+            quota-backend-bytes: "8589934592"
+            auto-compaction-retention: "3"
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: external
+          eviction-hard: 'imagefs.available<15%,memory.available<500Mi,nodefs.available<10%,nodefs.inodesFree<5%'
+    preKubeadmCommands:
+    - |
+      # Harden sysctl settings
+      cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
+      kernel.panic = 10
+      kernel.panic_on_oops = 1
+      vm.overcommit_memory = 1
+      vm.swappiness = 0
+      EOF
+      sudo sysctl -p /etc/sysctl.d/99-kubernetes.conf
+    - |
+      # Configure containerd
+      sudo mkdir -p /etc/containerd
+      containerd config default | sudo tee /etc/containerd/config.toml
+      sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+      sudo systemctl restart containerd
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: HCloudMachineTemplate
+metadata:
+  name: management-control-plane
+  namespace: default
+spec:
+  template:
+    spec:
+      type: cpx31
+      imageName: ubuntu-22.04
+      sshKeys:
+      - name: ${HETZNER_SSH_KEY}
+      placementGroupName: management-cp-pg
+      labels:
+        cluster: management
+        role: control-plane

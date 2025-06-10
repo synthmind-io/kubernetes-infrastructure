@@ -1,0 +1,148 @@
+#!/bin/bash
+# Environment Configuration for Hetzner Multi-Cluster Kubernetes
+# Copy this file to .envrc and fill in your values
+
+# ============================================================================
+# REQUIRED: Hetzner Cloud Configuration
+# ============================================================================
+# Get your API token from: https://console.hetzner.cloud/projects
+export HCLOUD_TOKEN="your-hetzner-cloud-api-token"
+
+# SSH key name that will be created/used in Hetzner Cloud
+export HETZNER_SSH_KEY="hetzner-k8s"
+
+# Optional: Only needed if using Hetzner dedicated (bare metal) servers
+export HETZNER_ROBOT_USER=""
+export HETZNER_ROBOT_PASSWORD=""
+
+# ============================================================================
+# REQUIRED: AWS Configuration (for Secrets Manager & Route53)
+# ============================================================================
+export AWS_REGION="eu-central-1"
+export AWS_ACCOUNT_ID="123456789012"
+
+# Option 1: Use AWS Profile (recommended)
+export AWS_PROFILE="your-profile-name"  # e.g., "personal" or "company"
+
+# Option 2: Use explicit credentials (if not using profiles)
+# export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+# export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+# ============================================================================
+# REQUIRED: GitHub Configuration (for GitOps)
+# ============================================================================
+# Personal Access Token with 'repo' and 'admin:repo_hook' scopes
+# Create at: https://github.com/settings/tokens/new
+export GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export GITHUB_USER="your-github-username"
+export GITHUB_ORG="your-github-org"  # Use same as GITHUB_USER for personal accounts
+
+# Optional: If you have multiple gh CLI profiles, specify which one to use
+export GITHUB_PROFILE=""  # e.g., "casperakos" or "itsironis"
+
+# ============================================================================
+# REQUIRED: Domain Configuration
+# ============================================================================
+# Base domain for all clusters (must have Route53 hosted zone)
+export BASE_DOMAIN="example.com"
+
+# ============================================================================
+# Cluster Configuration
+# ============================================================================
+# Cluster names (don't change unless you modify all configs)
+export CLUSTERS=("management" "monitoring" "dev" "devops" "staging")
+
+# Default location for Hetzner resources
+export HCLOUD_LOCATION="fsn1"  # or nbg1, hel1
+
+# ============================================================================
+# OPTIONAL: SSO Configuration (Google OAuth)
+# ============================================================================
+# For ArgoCD and Grafana SSO integration
+# Create OAuth app at: https://console.cloud.google.com/apis/credentials
+export GOOGLE_CLIENT_ID=""
+export GOOGLE_CLIENT_SECRET=""
+export GOOGLE_DOMAIN=""  # Restrict to your company domain (e.g., company.com)
+
+# ============================================================================
+# OPTIONAL: GitHub OAuth (Alternative to Google)
+# ============================================================================
+# Create OAuth app at: https://github.com/settings/applications/new
+export GITHUB_OAUTH_CLIENT_ID=""
+export GITHUB_OAUTH_CLIENT_SECRET=""
+
+# ============================================================================
+# OPTIONAL: Monitoring & Alerting
+# ============================================================================
+# Slack webhook for alerts
+export SLACK_WEBHOOK_URL=""
+export SLACK_CHANNEL="#kubernetes-alerts"
+
+# PagerDuty integration
+export PAGERDUTY_SERVICE_KEY=""
+
+# Grafana admin password (auto-generated if not set)
+export GRAFANA_ADMIN_PASSWORD=""
+
+# ============================================================================
+# OPTIONAL: Backup Configuration
+# ============================================================================
+# S3-compatible storage for Velero backups (uses Hetzner Object Storage)
+export BACKUP_S3_ENDPOINT="https://fsn1.your-objectstorage.com"
+export BACKUP_S3_BUCKET="velero-backups"
+export BACKUP_S3_ACCESS_KEY=""
+export BACKUP_S3_SECRET_KEY=""
+
+# ============================================================================
+# OPTIONAL: Container Registry
+# ============================================================================
+# Private registry for images (optional)
+export REGISTRY_URL=""
+export REGISTRY_USERNAME=""
+export REGISTRY_PASSWORD=""
+
+# ============================================================================
+# Advanced Configuration (usually no need to change)
+# ============================================================================
+# Kubernetes version for clusters
+export KUBERNETES_VERSION="v1.31.6"
+
+# Machine types for different node roles
+export CONTROL_PLANE_MACHINE_TYPE="cpx31"
+export WORKER_MACHINE_TYPE="cpx41"
+export MONITORING_MACHINE_TYPE="cpx51"
+
+# Network CIDRs (must not overlap)
+export MANAGEMENT_CIDR="10.0.0.0/16"
+export MONITORING_CIDR="10.246.0.0/16"
+export DEV_CIDR="10.248.0.0/16"
+export DEVOPS_CIDR="10.250.0.0/16"
+export STAGING_CIDR="10.252.0.0/16"
+
+# ============================================================================
+# Feature Flags
+# ============================================================================
+# Enable/disable optional components
+export ENABLE_DEFGUARD_VPN="true"
+export ENABLE_VECTOR_AGENT="true"
+export ENABLE_VELERO_BACKUPS="true"
+export ENABLE_EXTERNAL_DNS="true"
+export ENABLE_CERT_MANAGER="true"
+
+# ============================================================================
+# DO NOT EDIT BELOW THIS LINE
+# ============================================================================
+# Derived variables
+export KUBECONFIG="${KUBECONFIG:-kubeconfig-management}"
+export CAPH_WORKER_CLUSTER_KUBECONFIG="/tmp/workload-kubeconfig"
+
+# Validation
+if [[ -z "${HCLOUD_TOKEN}" ]]; then
+    echo "WARNING: HCLOUD_TOKEN is not set!"
+fi
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+    echo "WARNING: GITHUB_TOKEN is not set!"
+fi
+
+echo "Environment loaded from .envrc"

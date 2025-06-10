@@ -3,12 +3,9 @@
 
 set -euo pipefail
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# Source common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common-functions.sh"
 
 # Configuration
 AWS_REGION="${AWS_REGION:-eu-central-1}"
@@ -33,8 +30,8 @@ check_prerequisites() {
     fi
     
     # Check AWS credentials
-    if ! aws sts get-caller-identity &> /dev/null; then
-        print_message $RED "AWS credentials not configured. Please run 'aws configure'."
+    if ! aws_cli sts get-caller-identity &> /dev/null; then
+        print_message $RED "AWS credentials not configured. Please check your AWS_PROFILE or run 'aws configure'."
         exit 1
     fi
     
@@ -55,16 +52,16 @@ create_or_update_secret() {
     local tags=$4
     
     # Check if secret exists
-    if aws secretsmanager describe-secret --secret-id "$secret_name" --region "$AWS_REGION" &> /dev/null; then
+    if aws_cli secretsmanager describe-secret --secret-id "$secret_name" --region "$AWS_REGION" &> /dev/null; then
         print_message $YELLOW "Updating existing secret: $secret_name"
-        aws secretsmanager update-secret \
+        aws_cli secretsmanager update-secret \
             --secret-id "$secret_name" \
             --secret-string "$secret_value" \
             --description "$description" \
             --region "$AWS_REGION"
     else
         print_message $GREEN "Creating new secret: $secret_name"
-        aws secretsmanager create-secret \
+        aws_cli secretsmanager create-secret \
             --name "$secret_name" \
             --secret-string "$secret_value" \
             --description "$description" \
@@ -174,6 +171,54 @@ create_monitoring_secrets() {
     fi
 }
 
+# Function to create Route53/External DNS secrets
+create_route53_secrets() {
+    print_message $BLUE "Creating Route53/External DNS secrets..."
+    
+    # Route53 hosted zone IDs
+    read -p "Enter production Route53 hosted zone ID: " prod_zone_id
+    read -p "Enter dev Route53 hosted zone ID: " dev_zone_id
+    read -p "Enter staging Route53 hosted zone ID: " staging_zone_id
+    
+    create_or_update_secret \
+        "${SECRET_PREFIX}/route53/prod-zone-id" \
+        "$prod_zone_id" \
+        "Production Route53 hosted zone ID" \
+        "Key=type,Value=route53 Key=environment,Value=production"
+    
+    create_or_update_secret \
+        "${SECRET_PREFIX}/route53/dev-zone-id" \
+        "$dev_zone_id" \
+        "Development Route53 hosted zone ID" \
+        "Key=type,Value=route53 Key=environment,Value=dev"
+    
+    create_or_update_secret \
+        "${SECRET_PREFIX}/route53/staging-zone-id" \
+        "$staging_zone_id" \
+        "Staging Route53 hosted zone ID" \
+        "Key=type,Value=route53 Key=environment,Value=staging"
+    
+    # AWS credentials for External DNS (if using separate credentials)
+    read -p "Use separate AWS credentials for External DNS? (y/n): " use_separate_creds
+    if [[ "$use_separate_creds" == "y" ]]; then
+        read -p "Enter AWS access key for External DNS: " aws_access_key
+        read -sp "Enter AWS secret key for External DNS: " aws_secret_key
+        echo
+        
+        create_or_update_secret \
+            "${SECRET_PREFIX}/external-dns/aws-access-key" \
+            "$aws_access_key" \
+            "AWS access key for External DNS" \
+            "Key=type,Value=aws Key=usage,Value=external-dns"
+        
+        create_or_update_secret \
+            "${SECRET_PREFIX}/external-dns/aws-secret-key" \
+            "$aws_secret_key" \
+            "AWS secret key for External DNS" \
+            "Key=type,Value=aws Key=usage,Value=external-dns"
+    fi
+}
+
 # Function to create SSO secrets
 create_sso_secrets() {
     print_message $BLUE "Creating SSO secrets..."
@@ -243,7 +288,7 @@ list_secrets() {
     local filter=$1
     print_message $BLUE "Listing secrets with filter: $filter"
     
-    aws secretsmanager list-secrets \
+    aws_cli secretsmanager list-secrets \
         --region "$AWS_REGION" \
         --filters Key=name,Values="${SECRET_PREFIX}/${filter}" \
         --query 'SecretList[*].[Name,Description,LastChangedDate]' \
@@ -258,7 +303,7 @@ backup_secrets() {
     print_message $BLUE "Backing up secrets to $backup_dir..."
     
     # Get all secrets
-    secrets=$(aws secretsmanager list-secrets \
+    secrets=$(aws_cli secretsmanager list-secrets \
         --region "$AWS_REGION" \
         --filters Key=name,Values="${SECRET_PREFIX}/" \
         --query 'SecretList[*].Name' \
@@ -269,11 +314,11 @@ backup_secrets() {
         secret_file="${backup_dir}/$(echo $secret | tr '/' '_').json"
         
         # Get secret value and metadata
-        aws secretsmanager describe-secret \
+        aws_cli secretsmanager describe-secret \
             --secret-id "$secret" \
             --region "$AWS_REGION" > "${secret_file}.metadata.json"
         
-        aws secretsmanager get-secret-value \
+        aws_cli secretsmanager get-secret-value \
             --secret-id "$secret" \
             --region "$AWS_REGION" \
             --query 'SecretString' \
@@ -294,7 +339,7 @@ rotate_secret() {
     print_message $BLUE "Rotating secret: $secret_name"
     
     # Get current secret
-    current_value=$(aws secretsmanager get-secret-value \
+    current_value=$(aws_cli secretsmanager get-secret-value \
         --secret-id "$secret_name" \
         --region "$AWS_REGION" \
         --query 'SecretString' \
@@ -305,7 +350,7 @@ rotate_secret() {
     echo
     
     # Update the secret
-    aws secretsmanager update-secret \
+    aws_cli secretsmanager update-secret \
         --secret-id "$secret_name" \
         --secret-string "$new_value" \
         --region "$AWS_REGION"
@@ -321,7 +366,7 @@ delete_secret() {
     read -p "Are you sure you want to delete $secret_name? (yes/no): " confirm
     
     if [[ "$confirm" == "yes" ]]; then
-        aws secretsmanager delete-secret \
+        aws_cli secretsmanager delete-secret \
             --secret-id "$secret_name" \
             --recovery-window-in-days 7 \
             --region "$AWS_REGION"
@@ -342,10 +387,11 @@ show_menu() {
     echo "4. Create monitoring secrets"
     echo "5. Create ArgoCD secrets"
     echo "6. Create SSO secrets"
-    echo "7. List secrets"
-    echo "8. Backup all secrets"
-    echo "9. Rotate a secret"
-    echo "10. Delete a secret"
+    echo "7. Create Route53/External DNS secrets"
+    echo "8. List secrets"
+    echo "9. Backup all secrets"
+    echo "10. Rotate a secret"
+    echo "11. Delete a secret"
     echo "0. Exit"
     echo
 }
@@ -368,6 +414,7 @@ main() {
                             create_github_secrets
                             create_argocd_secrets
                             create_sso_secrets
+                            create_route53_secrets
                         fi
                         if [[ "$env" == "monitoring" ]]; then
                             create_monitoring_secrets
@@ -398,17 +445,20 @@ main() {
                 create_sso_secrets
                 ;;
             7)
+                create_route53_secrets
+                ;;
+            8)
                 read -p "Enter filter (or press enter for all): " filter
                 list_secrets "${filter}*"
                 ;;
-            8)
+            9)
                 backup_secrets
                 ;;
-            9)
+            10)
                 read -p "Enter secret name to rotate: " secret_name
                 rotate_secret "$secret_name"
                 ;;
-            10)
+            11)
                 read -p "Enter secret name to delete: " secret_name
                 delete_secret "$secret_name"
                 ;;

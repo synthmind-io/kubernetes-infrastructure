@@ -1,0 +1,46 @@
+# Environment files with secrets
+.envrc
+.envrc.bak*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Deployment state
+.deployment-state
+
+# Credentials and keys
+argocd-credentials.txt
+*.pem
+*.key
+*.crt
+kubeconfig-*
+
+# Temporary files
+*.tmp
+.tmp/
+temp/
+
+# Backup directories
+backups/
+cluster-backup-*/
+
+# Logs
+*.log
+logs/
