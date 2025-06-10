@@ -81,17 +81,14 @@ fi
 # Create networks for each cluster
 echo -e "${BLUE}Setting up networks...${NC}"
 
-declare -A NETWORKS=(
-    ["management"]="10.0.0.0/16"
-    ["monitoring"]="10.246.0.0/16"
-    ["dev"]="10.248.0.0/16"
-    ["devops"]="10.250.0.0/16"
-    ["staging"]="10.252.0.0/16"
-)
+# Define networks using arrays instead of associative arrays for compatibility
+CLUSTER_NAMES=("management" "monitoring" "dev" "devops" "staging")
+CLUSTER_CIDRS=("10.0.0.0/16" "10.246.0.0/16" "10.248.0.0/16" "10.250.0.0/16" "10.252.0.0/16")
 
-for cluster in "${!NETWORKS[@]}"; do
+for i in "${!CLUSTER_NAMES[@]}"; do
+    cluster="${CLUSTER_NAMES[i]}"
     network_name="${cluster}-network"
-    network_cidr="${NETWORKS[$cluster]}"
+    network_cidr="${CLUSTER_CIDRS[i]}"
     
     if ! resource_exists network "${network_name}"; then
         echo -e "${BLUE}Creating network: ${network_name} (${network_cidr})${NC}"
